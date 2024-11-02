@@ -1,37 +1,36 @@
 const express = require('express');
-const multer = require('multer');
 const Tesseract = require('tesseract.js');
-const path = require('path');
+const multer = require('multer');
+const cors = require('cors');
 const app = express();
-const upload = multer({ dest: 'uploads/' });
 
-app.use(express.json());
+app.use(cors());
+const upload = multer({ dest: 'uploads/' }); // Temporary folder for uploaded images
 
-// Endpoint for document upload and extraction
-app.post('/upload', upload.single('document'), async (req, res) => {
+app.post('/api/extract', upload.single('document'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+
     try {
-        const filePath = path.join(__dirname, req.file.path);
+        // Run OCR on the uploaded file
+        const { data: { text } } = await Tesseract.recognize(req.file.path, 'eng');
+        
+        // Define regex patterns for extracting fields
+        const namePattern = /Name:\s*([A-Z\s]+)/i;
+        const documentNumberPattern = /Document\s?Number:\s*([A-Z0-9]+)/i;
+        const expirationDatePattern = /Expiration\s?Date:\s*([\d/.\-]+)/i;
 
-        // Extract text using Tesseract
-        const { data: { text } } = await Tesseract.recognize(filePath, 'eng');
+        // Extract fields
+        const name = text.match(namePattern)?.[1] || 'Not found';
+        const documentNumber = text.match(documentNumberPattern)?.[1] || 'Not found';
+        const expirationDate = text.match(expirationDatePattern)?.[1] || 'Not found';
 
-        // Regex patterns for extracting name, document number, and expiration date
-        const nameMatch = text.match(/Name:\s*([A-Z\s]+)/);
-        const documentNumberMatch = text.match(/Document Number:\s*(\w+)/);
-        const expirationDateMatch = text.match(/Expiration Date:\s*([\d-]+)/);
-
-        const extractedData = {
-            name: nameMatch ? nameMatch[1] : null,
-            documentNumber: documentNumberMatch ? documentNumberMatch[1] : null,
-            expirationDate: expirationDateMatch ? expirationDateMatch[1] : null,
-        };
-
-        res.json(extractedData);
+        res.json({ name, documentNumber, expirationDate });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to process the document' });
+        res.status(500).json({ error: 'Error processing document' });
     }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
