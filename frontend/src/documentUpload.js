@@ -1,54 +1,52 @@
+// DocumentUploader.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 
-function DocumentCapture() {
-    const [file, setFile] = useState(null);
-    const [extractedData, setExtractedData] = useState(null);
-    const [error, setError] = useState(null);
+function DocumentUploader() {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [documentData, setDocumentData] = useState(null);
 
-    // Handle file change
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
+  const handleFileChange = (event) => {
+    setSelectedFile(event.target.files[0]);
+  };
 
-    // Handle form submission
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!file) return;
+  const handleUpload = async () => {
+    if (!selectedFile) return;
 
-        const formData = new FormData();
-        formData.append('document', file);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
 
-        try {
-            const response = await axios.post('http://localhost:5000/api/extract', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-            setExtractedData(response.data);
-            setError(null);
-        } catch (err) {
-            setError('Failed to process document');
-            setExtractedData(null);
-        }
-    };
+    try {
+      const response = await axios.post('http://localhost:5000/upload', formData);
+      setDocumentData(response.data); // Display extracted details
+    } catch (error) {
+      console.error('Error uploading file:', error);
+    }
+  };
 
-    return (
-        <div style={{ padding: '20px' }}>
-            <h2>Document Capture</h2>
-            <form onSubmit={handleSubmit}>
-                <input type="file" accept="image/*" onChange={handleFileChange} />
-                <button type="submit">Extract Information</button>
-            </form>
-            {error && <p style={{ color: 'red' }}>{error}</p>}
-            {extractedData && (
-                <div>
-                    <h3>Extracted Information:</h3>
-                    <p><strong>Name:</strong> {extractedData.name}</p>
-                    <p><strong>Document Number:</strong> {extractedData.documentNumber}</p>
-                    <p><strong>Expiration Date:</strong> {extractedData.expirationDate}</p>
-                </div>
-            )}
+  return (
+    <div>
+      <h2>Upload Document</h2>
+      <input type="file" onChange={handleFileChange} accept="image/*" />
+      <button onClick={handleUpload}>Extract Details</button>
+
+      {selectedFile && (
+        <div>
+          <h3>Preview:</h3>
+          <img src={URL.createObjectURL(selectedFile)} alt="Document preview" width="300" />
         </div>
-    );
+      )}
+
+      {documentData && (
+        <div>
+          <h3>Extracted Details:</h3>
+          <p>Name: {documentData.name}</p>
+          <p>Document Number: {documentData.documentNumber}</p>
+          <p>Expiration Date: {documentData.expirationDate}</p>
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default DocumentCapture;
+export default DocumentUploader;

@@ -1,36 +1,69 @@
+// server.js
 const express = require('express');
-const Tesseract = require('tesseract.js');
 const multer = require('multer');
-const cors = require('cors');
+const axios = require('axios');
+const fs = require('fs');
+
 const app = express();
+const upload = multer({ dest: 'uploads/' });
 
-app.use(cors());
-const upload = multer({ dest: 'uploads/' }); // Temporary folder for uploaded images
+const VISION_API_KEY = 'YOUR_GOOGLE_VISION_API_KEY'; // Replace with your actual API key
 
-app.post('/api/extract', upload.single('document'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-    }
+app.post('/upload', upload.single('file'), async (req, res) => {
+  const imagePath = req.file.path;
 
-    try {
-        // Run OCR on the uploaded file
-        const { data: { text } } = await Tesseract.recognize(req.file.path, 'eng');
-        
-        // Define regex patterns for extracting fields
-        const namePattern = /Name:\s*([A-Z\s]+)/i;
-        const documentNumberPattern = /Document\s?Number:\s*([A-Z0-9]+)/i;
-        const expirationDatePattern = /Expiration\s?Date:\s*([\d/.\-]+)/i;
+  try {
+    // Read the image file and convert it to Base64
+    const imageBuffer = fs.readFileSync(imagePath);
+    const imageBase64 = imageBuffer.toString('base64');
 
-        // Extract fields
-        const name = text.match(namePattern)?.[1] || 'Not found';
-        const documentNumber = text.match(documentNumberPattern)?.[1] || 'Not found';
-        const expirationDate = text.match(expirationDatePattern)?.[1] || 'Not found';
+    // Send the image to the Google Vision API
+    const response = await axios.post(
+      `https://vision.googleapis.com/v1/images:annotate?key=${VISION_API_KEY}`,
+      {
+        requests: [
+          {
+            image: { content: imageBase64 },
+            features: [{ type: 'TEXT_DETECTION' }]
+          }
+        ]
+      }
+    );
 
-        res.json({ name, documentNumber, expirationDate });
-    } catch (error) {
-        res.status(500).json({ error: 'Error processing document' });
-    }
+    const textAnnotations = response.data.responses[0].textAnnotations;
+    const text = textAnnotations.map(d => d.description).join(" ");
+
+    // Extract required details using regex or custom logic
+    const name = extractName(text);
+    const documentNumber = extractDocumentNumber(text);
+    const expirationDate = extractExpirationDate(text);
+
+    res.json({ name, documentNumber, expirationDate });
+  } catch (error) {
+    console.error('Error processing image:', error);
+    res.status(500).json({ error: 'Failed to process image' });
+  } finally {
+    // Clean up the uploaded image
+    fs.unlinkSync(imagePath);
+  }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Helper functions for extracting details
+function extractName(text) {
+  // Add regex or logic for extracting the name
+  return "John Doe";
+}
+
+function extractDocumentNumber(text) {
+  // Add regex or logic for extracting the document number
+  return "ABCDE1234F";
+}
+
+function extractExpirationDate(text) {
+  // Add regex or logic for extracting the expiration date
+  return "01/01/2030";
+}
+
+app.listen(5000, () => {
+  console.log('Server is running on http://localhost:5000');
+});
