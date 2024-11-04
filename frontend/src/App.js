@@ -1,10 +1,9 @@
 import React from 'react';
-import documentUpload from './documentUpload';
-
+import DocumentUpload from './Components/documentUpload'; 
 function App() {
     return (
         <div>
-            <documentUpload />
+            <DocumentUpload />
         </div>
     );
 }

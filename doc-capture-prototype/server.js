@@ -3,11 +3,16 @@ const express = require('express');
 const multer = require('multer');
 const axios = require('axios');
 const fs = require('fs');
+const cors = require('cors');
+require('dotenv').config(); // Load environment variables from .env file
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
-const VISION_API_KEY = 'YOUR_GOOGLE_VISION_API_KEY'; // Replace with your actual API key
+const VISION_API_KEY = process.env.VISION_API_KEY; // Read API key from .env file
+
+// Enable CORS
+app.use(cors());
 
 app.post('/upload', upload.single('file'), async (req, res) => {
   const imagePath = req.file.path;
@@ -31,6 +36,9 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     );
 
     const textAnnotations = response.data.responses[0].textAnnotations;
+    if (!textAnnotations || textAnnotations.length === 0) {
+      throw new Error('No text detected in the image.');
+    }
     const text = textAnnotations.map(d => d.description).join(" ");
 
     // Extract required details using regex or custom logic
@@ -40,7 +48,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     res.json({ name, documentNumber, expirationDate });
   } catch (error) {
-    console.error('Error processing image:', error);
+    console.error('Error processing image:', error.message || error);
     res.status(500).json({ error: 'Failed to process image' });
   } finally {
     // Clean up the uploaded image
@@ -50,18 +58,21 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
 // Helper functions for extracting details
 function extractName(text) {
-  // Add regex or logic for extracting the name
-  return "John Doe";
+  const nameRegex = /(?:Name|Holder):?\s*([A-Za-z\s]+)/i;
+  const match = text.match(nameRegex);
+  return match ? match[1].trim() : "Name not found";
 }
 
 function extractDocumentNumber(text) {
-  // Add regex or logic for extracting the document number
-  return "ABCDE1234F";
+  const numberRegex = /(?:Document|PAN|ID|Number):?\s*([A-Z0-9]+)/i;
+  const match = text.match(numberRegex);
+  return match ? match[1].trim() : "Document number not found";
 }
 
 function extractExpirationDate(text) {
-  // Add regex or logic for extracting the expiration date
-  return "01/01/2030";
+  const dateRegex = /\b(\d{2}\/\d{2}\/\d{4})\b/;
+  const match = text.match(dateRegex);
+  return match ? match[1] : "Expiration date not found";
 }
 
 app.listen(5000, () => {
