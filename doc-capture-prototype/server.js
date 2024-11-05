@@ -9,7 +9,7 @@ require('dotenv').config(); // Load environment variables from .env file
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 
-const VISION_API_KEY = VISION_API_KEY; // Read API key from .env file
+const VISION_API_KEY = process.env.VISION_API_KEY; // Read API key from .env file
 
 // Enable CORS
 app.use(cors());
