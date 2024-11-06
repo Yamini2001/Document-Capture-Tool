@@ -36,7 +36,7 @@ function DocumentUploader() {
 
   return (
     <div>
-      <h2>Upload Document</h2>
+      <h2>Select Document</h2>
       <input type="file" onChange={handleFileChange} accept="image/*" />
       <button onClick={handleUpload}>Extract Details</button>
 
