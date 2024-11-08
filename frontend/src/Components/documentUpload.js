@@ -52,7 +52,7 @@ function DocumentUploader() {
       {documentData && (
         <div>
           <h3>Extracted Details:</h3>
-          <p>Name: {documentData.name}</p>
+          <p>Person Name: {documentData.name}</p>
           <p>Document Number: {documentData.documentNumber}</p>
           <p>Expiration Date: {documentData.expirationDate}</p>
         </div>
