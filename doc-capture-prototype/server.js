@@ -4,15 +4,27 @@ const multer = require('multer');
 const axios = require('axios');
 const fs = require('fs');
 const cors = require('cors');
-require('dotenv').config(); // Load environment variables from .env file
+const mysql = require('mysql2');
+require('dotenv').config();
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
-
-const VISION_API_KEY = process.env.VISION_API_KEY; // Read API key from .env file
-
-// Enable CORS
 app.use(cors());
+
+const VISION_API_KEY = process.env.VISION_API_KEY;
+
+// MySQL Database Connection
+const db = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',      // Default user for XAMPP
+  password: '',      // Default password is empty
+  database: 'document_db'
+});
+
+db.connect((err) => {
+  if (err) throw err;
+  console.log('Connected to MySQL Database');
+});
 
 app.post('/upload', upload.single('file'), async (req, res) => {
   const imagePath = req.file.path;
@@ -41,18 +53,26 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     }
     const text = textAnnotations.map(d => d.description).join(" ");
 
-    // Extract required details using regex or custom logic
+    // Extract required details using regex
     const name = extractName(text);
     const documentNumber = extractDocumentNumber(text);
     const expirationDate = extractExpirationDate(text);
 
-    res.json({ name, documentNumber, expirationDate });
+    // Insert data into MySQL
+    const sql = 'INSERT INTO documents (name, documentNumber, expirationDate) VALUES (?, ?, ?)';
+    db.query(sql, [name, documentNumber, expirationDate], (err, result) => {
+      if (err) {
+        console.error('Failed to insert data into MySQL:', err);
+        return res.status(500).json({ error: 'Database insertion failed' });
+      }
+      console.log('Data inserted into MySQL:', result);
+      res.json({ name, documentNumber, expirationDate });
+    });
   } catch (error) {
     console.error('Error processing image:', error.message || error);
     res.status(500).json({ error: 'Failed to process image' });
   } finally {
-    // Clean up the uploaded image
-    fs.unlinkSync(imagePath);
+    fs.unlinkSync(imagePath); // Clean up the uploaded image
   }
 });
 

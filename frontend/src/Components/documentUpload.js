@@ -1,4 +1,4 @@
-// DocumentUploader.jsx
+// src/components/DocumentUploader.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -7,12 +7,14 @@ function DocumentUploader() {
   const [documentData, setDocumentData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Handle file change event
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
     setErrorMessage('');
     setDocumentData(null);
   };
 
+  // Handle file upload
   const handleUpload = async () => {
     if (!selectedFile) {
       setErrorMessage('Please select a file to upload.');
@@ -35,10 +37,10 @@ function DocumentUploader() {
   };
 
   return (
-    <div>
-      <h2>Select Document</h2>
+    <div style={{ padding: '20px' }}>
+      <h2>Upload Document</h2>
       <input type="file" onChange={handleFileChange} accept="image/*" />
-      <button onClick={handleUpload}>Extract Details</button>
+      <button onClick={handleUpload} style={{ marginLeft: '10px' }}>Extract Details</button>
 
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
@@ -51,10 +53,10 @@ function DocumentUploader() {
 
       {documentData && (
         <div>
-          <h3>Extract Details:</h3>
-          <p>Person Name: {documentData.name}</p>
-          <p>Document Number: {documentData.documentNumber}</p>
-          <p>Expiration Date: {documentData.expirationDate}</p>
+          <h3>Extracted Details:</h3>
+          <p><strong>Person Name:</strong> {documentData.name}</p>
+          <p><strong>Document Number:</strong> {documentData.documentNumber}</p>
+          <p><strong>Expiration Date:</strong> {documentData.expirationDate}</p>
         </div>
       )}
     </div>
