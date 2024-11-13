@@ -49,7 +49,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 
     const textAnnotations = response.data.responses[0].textAnnotations;
     if (!textAnnotations || textAnnotations.length === 0) {
-      throw new Error('No text detected in the image.');
+      throw new Error('No text detected in the image');
     }
     const text = textAnnotations.map(d => d.description).join(" ");
 
