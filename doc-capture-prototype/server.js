@@ -18,7 +18,7 @@ const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',      // Default user for XAMPP
   password: '',      // Default password is empty
-  database: 'upload'
+  database: 'uploads'
 });
 
 db.connect((err) => {
