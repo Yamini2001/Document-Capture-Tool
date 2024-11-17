@@ -47,7 +47,7 @@ function DocumentUploader() {
       {selectedFile && (
         <div>
           <h3>Preview</h3>
-          <img src={URL.createObjectURL(selectedFile)} alt="Document preview" width="300" />
+          <img src={URL.createObjectURL(selectedFile)} alt="Document preview" width="400" />
         </div>
       )}
 
