@@ -40,7 +40,7 @@ function DocumentUploader() {
     <div style={{ padding: '20px' }}>
       <h2>Upload Document</h2>
       <input type="file" onChange={handleFileChange} accept="image/*" />
-      <button onClick={handleUpload} style={{ marginLeft: '10px' }}>Extract Details</button>
+      <button onClick={handleUpload} style={{ marginLeft: '10px' }}>Extract Data</button>
 
       {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
